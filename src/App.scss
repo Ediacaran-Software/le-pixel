@@ -1,0 +1,116 @@
+$top-nav-bar-height: 60px;
+$left-tool-bar-width: 100px;
+$right-tool-bar-width: 200px;
+$bottom-nav-bar-height: 40px;
+$menu-background-color: #333333;
+
+.top-nav-bar {
+  position: absolute;
+  float: left;
+  top: 0px;
+  width: 100%;
+  height: $top-nav-bar-height;
+  background-color: $menu-background-color;
+  .header-box {
+    // position: absolute;
+    // left: 50%;
+    // width: 160px;
+    // margin-left: -80px;
+  }
+
+  .header-box-content {
+    display: flex;
+    .header {
+      height: 40px;
+      font-size: 24px;
+      margin-left: 10px;
+    }
+  }
+}
+
+.middle-content {
+  position: absolute;
+  float: left;
+  top: $top-nav-bar-height;
+  bottom: $bottom-nav-bar-height;
+  width: 100%;
+
+  .left-tool-bar {
+    position: absolute;
+    float: left;
+    width: $left-tool-bar-width;
+    height: 100%;
+    background-color: $menu-background-color;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    .tool-btn {
+      width: 46px;
+      height: 46px;
+      margin: 2px;
+      padding: 0px;
+      border: none;
+      border-radius: 4px;
+      background-color: darken($menu-background-color, 3%);
+      &:hover {
+        background-color: rgb(163, 163, 163);
+      }
+    }
+  }
+
+  .canvas {
+    position: absolute;
+    float: left;
+    left: $left-tool-bar-width;
+    right: $right-tool-bar-width;
+    height: 100%;
+    background-color: #222;
+
+    &.use-pen1 {
+      cursor: url("./statics/pen1-rotate.svg"), auto;
+    }
+    &.use-eraser {
+      cursor: url("./statics/eraser.svg"), auto;
+    }
+    &.use-pointer {
+      cursor: pointer;
+    }
+
+    .svg-canvas {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      -webkit-transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  .right-tool-bar {
+    position: absolute;
+    right: 0px;
+    width: $right-tool-bar-width;
+    height: 100%;
+    background-color: $menu-background-color;
+  }
+
+  .tool-bar {
+    border-top: dashed 1px #111;
+    border-bottom: dashed 1px #111;
+  }
+}
+
+.bottom-nav-bar {
+  position: absolute;
+  float: left;
+  bottom: 0px;
+  width: 100%;
+  height: $bottom-nav-bar-height;
+  background-color: $menu-background-color;
+  height: $bottom-nav-bar-height;
+}
+
+.canvas-cursor {
+  width: 20px;
+  height: 20px;
+  color: red;
+}

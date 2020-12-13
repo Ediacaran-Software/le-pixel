@@ -12,12 +12,46 @@ $menu-background-color: #333333;
   height: $top-nav-bar-height;
   background-color: $menu-background-color;
 
+  display: flex !important;
+  justify-content: space-between !important;
+
+  .left-menu-box {
+    display: flex;
+    .margin-left:not(:first-child) {
+      margin-left: 20px;
+    }
+  }
+
+  .btn-basic {
+    background-color: rgba(0, 0, 0, 0);
+    border: none;
+    padding: 0px 6px;
+    height: 40px;
+    img {
+      padding: 10px 0px;
+    }
+    span {
+      line-height: 40px;
+      font-size: 16px;
+      padding-left: 4px;
+    }
+    &:hover {
+      background-color: rgba(0, 0, 0, 0);
+      border: none;
+    }
+    &:after {
+      content: none;
+    }
+  }
+
   .header-box-content {
     display: flex;
     .header {
       height: 40px;
-      font-size: 24px;
+      font-size: 30px;
       margin-left: 10px;
+      font-weight: bold;
+      line-height: 40px;
     }
   }
 }
@@ -30,6 +64,7 @@ $menu-background-color: #333333;
   width: 100%;
 
   .left-tool-bar {
+    z-index: 10;
     position: absolute;
     float: left;
     width: $left-tool-bar-width;
@@ -64,7 +99,7 @@ $menu-background-color: #333333;
       cursor: url("./statics/pen1-rotate.svg"), auto;
     }
     &.use-eraser {
-      cursor: url("./statics/eraser.svg"), auto;
+      cursor: url("./statics/eraser-rotate.svg"), auto;
     }
     &.use-pointer {
       cursor: pointer;
@@ -80,6 +115,7 @@ $menu-background-color: #333333;
   }
 
   .right-tool-bar {
+    z-index: 10;
     position: absolute;
     right: 0px;
     width: $right-tool-bar-width;
@@ -91,6 +127,7 @@ $menu-background-color: #333333;
       font-size: 16px;
       padding: 10px 12px;
       margin: 0px;
+      width: calc(#{$right-tool-bar-width - 40px});
     }
     .color-panel-container {
       // right scroll
@@ -99,6 +136,7 @@ $menu-background-color: #333333;
       background-color: rgb(66, 66, 66);
       overflow-y: scroll;
       overflow-x: hidden;
+      margin-bottom: 6px;
       /* width */
       &::-webkit-scrollbar {
         width: 6px;
@@ -120,6 +158,17 @@ $menu-background-color: #333333;
       }
       .color-panel {
         height: 700px;
+      }
+    }
+
+    .header {
+      display: flex;
+      .current-color {
+        width: 30px;
+        height: 30px;
+        margin: auto 6px;
+        border-radius: 6px;
+        background-color: #fff;
       }
     }
   }

@@ -1,13 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
-import { Button, Navbar } from "react-bootstrap";
+import { Button, Dropdown, Navbar } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import * as d3 from "d3";
-import { select, Selection } from "d3";
+import { brush, select, Selection } from "d3";
 
 import pen1 from "./statics/pen1.svg";
 import eraser from "./statics/eraser.svg";
 import pixels from "./statics/pixels.svg";
+
+import file from "./statics/file.svg";
+import undo from "./statics/undo.svg";
+import redo from "./statics/redo.svg";
 
 const LightenColor = (color: string, percent: number) => {
   var num = parseInt(color.replace("#", ""), 16),
@@ -51,10 +55,10 @@ function App() {
   >>(null);
 
   const constants = {
-    pixelWidth: 20,
-    pixelHeight: 20,
-    svgCanvasWidth: 800,
-    svgCanvasHeight: 600,
+    pixelWidth: 10,
+    pixelHeight: 10,
+    svgCanvasWidth: 600,
+    svgCanvasHeight: 400,
     colorCellWidth: 30,
     colorCellHeight: 30,
   };
@@ -74,6 +78,12 @@ function App() {
     color: string;
   }
   const data: Pixel[] = [];
+  // const lastCanvasState: Pixel[] = [];
+  /** TODO
+   * undo redo
+   * use data stack, and track how many nodes in each move
+   * remove and exit last n nodes => undo
+   */
 
   interface Color {
     colorCode: string;
@@ -262,6 +272,7 @@ function App() {
         .attr("ry", 2)
         .on("click", (event) => {
           brushState.color = event.target.attributes.fill.nodeValue;
+          document.getElementById("current-color")!.style.backgroundColor = brushState.color;
         })
         .on("mouseover", (event) => {
           d3.select(event.target)
@@ -291,12 +302,38 @@ function App() {
   return (
     <div className="three-columns-layout">
       <Navbar variant="dark" className="top-nav-bar">
+        <div className="left-menu-box">
+          <Dropdown className="margin-left">
+            <Dropdown.Toggle variant="secondary" id="dropdown-basic" className="btn-basic">
+              <img src={file} alt="file"></img>
+              <span>FILE</span>
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              <Dropdown.Item href="#/action-1" onClick={() => resetData()}>
+                NEW
+              </Dropdown.Item>
+              <Dropdown.Item href="#/action-2" onClick={() => resetData()}>
+                CLEAR
+              </Dropdown.Item>
+              {/* <Dropdown.Item href="#/action-3">Something else</Dropdown.Item> */}
+            </Dropdown.Menu>
+          </Dropdown>
+          <Button variant="secondary" className="btn-basic margin-left">
+            <img src={undo} alt="undo"></img>
+            <span>UNDO</span>
+          </Button>
+          <Button variant="secondary" className="btn-basic margin-left">
+            <img src={redo} alt="redo"></img>
+            <span>REDO</span>
+          </Button>
+        </div>
         <Navbar.Brand href="#home">
           <div className="header-box-content">
             <img src={pixels} alt="pixels" width="40" height="40"></img>
-            <div className="header">Le Pixel</div>
+            <div className="header">LE PIXEL</div>
           </div>
         </Navbar.Brand>
+        <div></div>
       </Navbar>
       <div className="middle-content">
         <div className="left-tool-bar tool-bar">
@@ -309,7 +346,7 @@ function App() {
             </Button>
           </div>
         </div>
-        <div className="canvas" id="canvas">
+        <div className="canvas use-pen1" id="canvas">
           <svg
             ref={svgRef}
             className="svg-canvas"
@@ -318,7 +355,10 @@ function App() {
           ></svg>
         </div>
         <div className="right-tool-bar tool-bar">
-          <h2>DEFAULT COLORS</h2>
+          <div className="header">
+            <h2>DEFAULT COLORS</h2>
+            <div className="current-color" id="current-color" style={{ backgroundColor: brushState.color }}></div>
+          </div>
           <div className="color-panel-container">
             <svg ref={colorRef} className="color-panel"></svg>
           </div>

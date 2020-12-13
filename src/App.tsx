@@ -3,7 +3,7 @@ import "./App.css";
 import { Button, Dropdown, Navbar } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import * as d3 from "d3";
-import { brush, select, Selection } from "d3";
+import { select, Selection } from "d3";
 
 import pen1 from "./statics/pen1.svg";
 import eraser from "./statics/eraser.svg";
@@ -55,8 +55,8 @@ function App() {
   >>(null);
 
   const constants = {
-    pixelWidth: 10,
-    pixelHeight: 10,
+    pixelWidth: 4,
+    pixelHeight: 4,
     svgCanvasWidth: 600,
     svgCanvasHeight: 400,
     colorCellWidth: 30,
@@ -125,12 +125,14 @@ function App() {
   interface BrushState {
     brushType: BrushType;
     color: string;
+    size: number;
   }
   // TODO: change to set state
   // eslint-disable-next-line react-hooks/exhaustive-deps
   var brushState: BrushState = {
     brushType: BrushType.pen,
     color: "#555",
+    size: 3,
   };
 
   const drawBetween = (preX: number, preY: number, curX: number, curY: number) => {
@@ -184,6 +186,8 @@ function App() {
     }
   };
 
+  const drawOtherPixels = (xIndex: number, yIndex: number, size: number) => {};
+
   useEffect(() => {
     if (!selection) {
       setSelection(select(svgRef.current));
@@ -215,6 +219,11 @@ function App() {
           }
 
           d3.select(this).attr("fill", currentColor);
+          /** TODO
+           * brush size
+           */
+          drawOtherPixels(xIndex, yIndex, brushState.size);
+
           if (preIndexX === -1) {
             // eslint-disable-next-line react-hooks/exhaustive-deps
             preIndexX = xIndex;
@@ -248,6 +257,15 @@ function App() {
         .on("mouseup", function () {
           preIndexX = -1;
           preIndexY = -1;
+        })
+        // on mouse over
+        .on("mouseover", function () {
+          if (preIndexX === -1 && preIndexY === -1 && brushState.brushType === BrushType.pen) {
+          }
+        })
+        .on("mouseout", function () {
+          if (preIndexX === -1 && preIndexY === -1 && brushState.brushType === BrushType.pen) {
+          }
         });
     }
   }, [constants.pixelHeight, constants.pixelWidth, data, selection]);
@@ -309,12 +327,8 @@ function App() {
               <span>FILE</span>
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              <Dropdown.Item href="#/action-1" onClick={() => resetData()}>
-                NEW
-              </Dropdown.Item>
-              <Dropdown.Item href="#/action-2" onClick={() => resetData()}>
-                CLEAR
-              </Dropdown.Item>
+              <Dropdown.Item onClick={() => resetData()}>NEW</Dropdown.Item>
+              <Dropdown.Item onClick={() => resetData()}>CLEAR</Dropdown.Item>
               {/* <Dropdown.Item href="#/action-3">Something else</Dropdown.Item> */}
             </Dropdown.Menu>
           </Dropdown>
@@ -327,7 +341,7 @@ function App() {
             <span>REDO</span>
           </Button>
         </div>
-        <Navbar.Brand href="#home">
+        <Navbar.Brand>
           <div className="header-box-content">
             <img src={pixels} alt="pixels" width="40" height="40"></img>
             <div className="header">LE PIXEL</div>
@@ -342,8 +356,11 @@ function App() {
               <img src={pen1} alt="pen1" width="20" height="20"></img>
             </Button>
             <Button variant="secondary" className="tool-btn" onClick={() => changeCursor("eraser")}>
-              <img src={eraser} alt="pen1" width="20" height="20"></img>
+              <img src={eraser} alt="eraser" width="20" height="20"></img>
             </Button>
+            {/* <Button variant="secondary" className="tool-btn" onClick={() => changeCursor("color-picker")}>
+              <img src={} alt="" width="20" height="20"></img>
+            </Button> */}
           </div>
         </div>
         <div className="canvas use-pen1" id="canvas">

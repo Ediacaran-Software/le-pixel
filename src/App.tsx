@@ -7,18 +7,56 @@ import { select, Selection } from "d3";
 
 import pen1 from "./statics/pen1.svg";
 import eraser from "./statics/eraser.svg";
-// import pen1 from "./statics/pen1.svg";
 import pixels from "./statics/pixels.svg";
+
+const LightenColor = (color: string, percent: number) => {
+  var num = parseInt(color.replace("#", ""), 16),
+    amt = Math.round(2.55 * percent),
+    R = (num >> 16) + amt,
+    B = ((num >> 8) & 0x00ff) + amt,
+    G = (num & 0x0000ff) + amt;
+
+  return (
+    0x1000000 +
+    (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+    (B < 255 ? (B < 1 ? 0 : B) : 255) * 0x100 +
+    (G < 255 ? (G < 1 ? 0 : G) : 255)
+  )
+    .toString(16)
+    .slice(1);
+};
+
+function hslToHex(h: number, s: number, l: number): string {
+  l /= 100;
+  const a = (s * Math.min(l, 1 - l)) / 100;
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, "0"); // convert to Hex and prefix "0" if needed
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
 
 function App() {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const colorRef = useRef<SVGSVGElement | null>(null);
   const [selection, setSelection] = useState<null | Selection<SVGSVGElement | null, unknown, null, undefined>>(null);
+  const [colorSelection, setColorSelection] = useState<null | Selection<
+    SVGSVGElement | null,
+    unknown,
+    null,
+    undefined
+  >>(null);
 
   const constants = {
-    pixelWidth: 10,
-    pixelHeight: 10,
-    svgCanvasWidth: 400,
-    svgCanvasHeight: 300,
+    pixelWidth: 20,
+    pixelHeight: 20,
+    svgCanvasWidth: 800,
+    svgCanvasHeight: 600,
+    colorCellWidth: 30,
+    colorCellHeight: 30,
   };
 
   enum BrushType {
@@ -35,9 +73,20 @@ function App() {
     height: number;
     color: string;
   }
-
   const data: Pixel[] = [];
 
+  interface Color {
+    colorCode: string;
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const colorData: Color[] = [];
+  const originColorData: string[] = [];
+
+  // and grey color
+  originColorData.push("#111111");
+  for (let i = 0; i < 20; i++) {
+    originColorData.push(hslToHex((360 / 20) * i, 88, 66));
+  }
   // init value
   /* add init setup here
   
@@ -55,17 +104,26 @@ function App() {
     }
   }
 
+  for (let i = 0; i < originColorData.length; i++) {
+    for (let j = 0; j < 6; j++) {
+      colorData.push({ colorCode: `#${LightenColor(originColorData[i], j * 8)}` });
+    }
+  }
+
   var preIndexX: number = -1;
   var preIndexY: number = -1;
   interface BrushState {
     brushType: BrushType;
+    color: string;
   }
   // TODO: change to set state
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   var brushState: BrushState = {
-    brushType: BrushType.pointer,
+    brushType: BrushType.pen,
+    color: "#555",
   };
 
-  const drawBetween = (curX: number, curY: number, preX: number, preY: number) => {
+  const drawBetween = (preX: number, preY: number, curX: number, curY: number) => {
     // draw pixels between to positions that far from each other
     const dx = curX - preX;
     const dy = curY - preY;
@@ -73,17 +131,46 @@ function App() {
     const verticalSlope = dx / dy;
     // x is long axis
     if (Math.abs(dx) > Math.abs(dy)) {
-      console.log(slope);
       for (let x = preX; x !== curX + (preX < curX ? 1 : -1); x += preX < curX ? 1 : -1) {
-        d3.select(`#p${x}-${Math.round(preY + slope * (x - preX))}`).attr("fill", "rgb(60, 120, 254)");
+        const newY = Math.round(preY + slope * (x - preX));
+        d3.select(`#p${x}-${newY}`).attr("fill", getFillColor(x, newY));
       }
     }
     // y is long axis
     else {
-      console.log(verticalSlope);
       for (let y = preY; y !== curY + (preY < curY ? 1 : -1); y += preY < curY ? 1 : -1) {
-        d3.select(`#p${Math.round(preX + verticalSlope * (y - preY))}-${y}`).attr("fill", "rgb(60, 120, 254)");
+        const newX = Math.round(preX + verticalSlope * (y - preY));
+        d3.select(`#p${newX}-${y}`).attr("fill", getFillColor(newX, y));
       }
+    }
+  };
+
+  const getFillColor = (xIndex: number, yIndex: number): string => {
+    var result: string;
+    if (brushState.brushType === BrushType.pen) {
+      result = brushState.color;
+    } else if (brushState.brushType === BrushType.eraser) {
+      result = (xIndex + yIndex) % 2 === 0 ? "#ddd" : "#fff";
+    } else {
+      result = "none";
+    }
+    return result;
+  };
+
+  const changeCursor = (cursorName: string) => {
+    const canvas = document.getElementById("canvas")!;
+    canvas.className = "canvas";
+
+    canvas.classList.add(`use-${cursorName}`);
+    switch (cursorName) {
+      case "pen1":
+        brushState.brushType = BrushType.pen;
+        break;
+      case "eraser":
+        brushState.brushType = BrushType.eraser;
+        break;
+      default:
+        brushState.brushType = BrushType.default;
     }
   };
 
@@ -105,33 +192,41 @@ function App() {
         .attr("id", (d) => d.id)
         // on mouse down
         .on("mousedown", function (event) {
-          d3.select(this).attr("fill", "rgb(60, 120, 254)");
           const xIndex = Math.floor(d3.pointer(event)[0] / constants.pixelWidth);
           const yIndex = Math.floor(d3.pointer(event)[1] / constants.pixelHeight);
+
+          const currentColor = getFillColor(xIndex, yIndex);
+          if (currentColor === "none") {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            preIndexX = -1;
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            preIndexY = -1;
+            return;
+          }
+
+          d3.select(this).attr("fill", currentColor);
           if (preIndexX === -1) {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             preIndexX = xIndex;
           }
           if (preIndexY === -1) {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             preIndexY = yIndex;
           }
-          // isDrawing = true;
         })
         // on mouse over
         .on("mousemove", function (event) {
           // if is in drawing, -1 means not drawing
           if (preIndexX !== -1 && preIndexY !== -1) {
-            // console.log(d3.pointer(event));
             const curIndexX = Math.floor(d3.pointer(event)[0] / constants.pixelWidth);
             const curIndexY = Math.floor(d3.pointer(event)[1] / constants.pixelHeight);
-            // console.log(curIndexX, curIndexY);
-
             if (preIndexX !== curIndexX || preIndexY !== curIndexY) {
               // if distance between two mouse position is large than 2 => at least on pixel could insert into the gap
               if (Math.abs(preIndexX - curIndexX) > 1 || Math.abs(preIndexY - curIndexY) > 1) {
                 // drawBetween(curIndexX, curIndexY);
-                drawBetween(curIndexX, curIndexY, preIndexX, preIndexY);
+                drawBetween(preIndexX, preIndexY, curIndexX, curIndexY);
               } else {
-                d3.select(`#p${curIndexX}-${curIndexY}`).attr("fill", "rgb(60, 120, 255)");
+                d3.select(`#p${curIndexX}-${curIndexY}`).attr("fill", getFillColor(curIndexX, curIndexY));
               }
 
               preIndexX = curIndexX;
@@ -143,10 +238,43 @@ function App() {
         .on("mouseup", function () {
           preIndexX = -1;
           preIndexY = -1;
-          // isDrawing = false;
         });
     }
   }, [constants.pixelHeight, constants.pixelWidth, data, selection]);
+
+  // color panel
+  useEffect(() => {
+    if (!colorSelection) {
+      setColorSelection(select(colorRef.current));
+    } else {
+      const colors = colorSelection;
+      colors
+        .selectAll("rect")
+        .data(colorData)
+        .enter()
+        .append("rect")
+        .attr("width", constants.colorCellWidth)
+        .attr("height", constants.colorCellHeight)
+        .attr("x", (_, i) => (i % 6) * (constants.colorCellWidth + 2) + 2)
+        .attr("y", (_, i) => Math.floor(i / 6) * (constants.colorCellHeight + 2) + 2)
+        .attr("fill", (d) => d.colorCode)
+        .attr("rx", 2)
+        .attr("ry", 2)
+        .on("click", (event) => {
+          brushState.color = event.target.attributes.fill.nodeValue;
+        })
+        .on("mouseover", (event) => {
+          d3.select(event.target)
+            .attr("stroke", "#fff")
+            .attr("stroke-dasharray", "5,3")
+            .attr("stroke-linecap", "butt")
+            .attr("stroke-width", "2");
+        })
+        .on("mouseout", (event) => {
+          d3.select(event.target).attr("stroke-width", "0");
+        });
+    }
+  }, [brushState, colorData, colorSelection, constants.colorCellHeight, constants.colorCellWidth]);
 
   const resetData = () => {
     preIndexX = -1;
@@ -158,23 +286,6 @@ function App() {
       );
     });
     changeCursor("");
-  };
-
-  const changeCursor = (cursorName: string) => {
-    const canvas = document.getElementById("canvas")!;
-    canvas.className = "canvas";
-
-    canvas.classList.add(`use-${cursorName}`);
-    switch (cursorName) {
-      case "pen":
-        brushState.brushType = BrushType.pen;
-        break;
-      case "eraser":
-        brushState.brushType = BrushType.eraser;
-        break;
-      default:
-        brushState.brushType = BrushType.default;
-    }
   };
 
   return (
@@ -196,8 +307,6 @@ function App() {
             <Button variant="secondary" className="tool-btn" onClick={() => changeCursor("eraser")}>
               <img src={eraser} alt="pen1" width="20" height="20"></img>
             </Button>
-            {/* <Button variant="secondary" className="tool-btn"></Button>
-            <Button variant="secondary" className="tool-btn"></Button> */}
           </div>
         </div>
         <div className="canvas" id="canvas">
@@ -209,9 +318,10 @@ function App() {
           ></svg>
         </div>
         <div className="right-tool-bar tool-bar">
-          <Button variant="primary" onClick={() => resetData()}>
-            Reset
-          </Button>
+          <h2>DEFAULT COLORS</h2>
+          <div className="color-panel-container">
+            <svg ref={colorRef} className="color-panel"></svg>
+          </div>
         </div>
       </div>
       <div className="bottom-nav-bar"></div>

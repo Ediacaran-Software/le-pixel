@@ -17,10 +17,15 @@
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
+  width: 300px;
 }
 
 .top-nav-bar .left-menu-box .margin-left:not(:first-child) {
   margin-left: 20px;
+}
+
+.top-nav-bar .right-menu-box {
+  width: 300px;
 }
 
 .top-nav-bar .btn-basic {

@@ -17,9 +17,14 @@ $menu-background-color: #333333;
 
   .left-menu-box {
     display: flex;
+    width: 300px;
     .margin-left:not(:first-child) {
       margin-left: 20px;
     }
+  }
+
+  .right-menu-box {
+    width: 300px;
   }
 
   .btn-basic {

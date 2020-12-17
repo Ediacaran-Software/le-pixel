@@ -347,7 +347,7 @@ function App() {
             <div className="header">LE PIXEL</div>
           </div>
         </Navbar.Brand>
-        <div></div>
+        <div className="right-menu-box"></div>
       </Navbar>
       <div className="middle-content">
         <div className="left-tool-bar tool-bar">
